@@ -33,7 +33,7 @@ func init() {
 	tables = make(map[string]*bigquery.TableMetadata)
 }
 
-func TestLoader_StreamLoad(t *testing.T) {
+func TestStreamLoad(t *testing.T) {
 
 	var retryable bool
 	ctx := context.Background()

@@ -275,23 +275,30 @@ func (l *loader) createRows(data []*entity.Transformed) ([]*Row, Columns, error)
 			continue
 		}
 
-		if tableSpec.InsertIdFromId != "" {
-			if insertId, ok := rawRowData.Data[tableSpec.InsertIdFromId]; ok {
-				row.InsertId, ok = insertId.(string)
-				if !ok {
-					// This can only happen in case of a badly written stream spec or
-					// an event is sent where its insert ID field is of the wrong type.
-					// The event will still be inserted but the effectiveness of BQ
-					// best effort deduplication is reduced. For this reason the issue
-					// is notified while processing is allowed to continue.
-					l.notifier.Notify(entity.NotifyLevelError, "Corrupt insert ID (%#v) in event, tableSpec: %+v", row.InsertId, tableSpec)
-				}
-			}
-		}
+		row.InsertId = l.getInsertId(tableSpec, rawRowData)
 		rows = append(rows, row)
 	}
 
 	return rows, newColumns, nil
+}
+
+func (l *loader) getInsertId(tableSpec entity.Table, rawRowData *entity.Transformed) string {
+	var insertIdOut string
+	if tableSpec.InsertIdFromId == "" {
+		return ""
+	}
+	if insertId, ok := rawRowData.Data[tableSpec.InsertIdFromId]; ok {
+		insertIdOut, ok = insertId.(string)
+		if !ok {
+			// This can only happen in case of a badly written stream spec or
+			// an event is sent where its insert ID field is of the wrong type.
+			// The event will still be inserted but the effectiveness of BQ
+			// best effort deduplication is reduced. For this reason the issue
+			// is notified while processing is allowed to continue.
+			l.notifier.Notify(entity.NotifyLevelError, "Corrupt insert ID (%#v) in event, tableSpec: %+v", insertId, tableSpec)
+		}
+	}
+	return insertIdOut
 }
 
 func (l *loader) createRow(tableSpec entity.Table, rawRowData *entity.Transformed, newColumns Columns) (row *Row, skipRow bool, err error) {
