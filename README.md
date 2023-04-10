@@ -1,6 +1,18 @@
 # GEIST BigQuery Connector
+<div>
+
+[![Go Report Card](https://goreportcard.com/badge/github.com/zpiroux/geist-connector-bigquery)](https://goreportcard.com/report/github.com/zpiroux/geist-connector-bigquery)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=zpiroux_geist-connector-bigquery&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=zpiroux_geist-connector-bigquery)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=zpiroux_geist-connector-bigquery&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=zpiroux_geist-connector-bigquery)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=zpiroux_geist-connector-bigquery&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=zpiroux_geist-connector-bigquery)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=zpiroux_geist-connector-bigquery&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=zpiroux_geist-connector-bigquery)
+
+</div>
 
 Geist BigQuery Connector enables BigQuery as a sink type in stream specs when using Geist.
+
+Note that this connector previously resided in the [geist-connector-gcp](https://github.com/zpiroux/geist-connector-gcp) repo, but was moved out to its own for improved maintainability and ease of use.
+
 ## Usage
 See [GEIST core repo](https://github.com/zpiroux/geist) for general information.
 
