@@ -25,14 +25,15 @@ type Config struct {
 var bigQueryMetadataMutex sync.Mutex
 
 type LoaderFactory struct {
-	config Config
-	client *bigquery.Client
+	config         Config
+	client         *bigquery.Client
+	providedClient BigQueryClient
 }
 
 // NewLoaderFactory creates a new BigQuery loader connector.
 // For standard usage, set bqClient to nil, making a default BigQuery client to be
 // created internally.
-func NewLoaderFactory(ctx context.Context, config Config, bqClient BigQueryClient) (*LoaderFactory, error) {
+func NewLoaderFactory(ctx context.Context, config Config, client BigQueryClient) (*LoaderFactory, error) {
 	var err error
 	lf := &LoaderFactory{
 		config: config,
@@ -42,10 +43,12 @@ func NewLoaderFactory(ctx context.Context, config Config, bqClient BigQueryClien
 		return nil, errors.New("no project id set")
 	}
 
-	if isNil(bqClient) {
+	if isNil(client) {
 		if lf.client, err = bigquery.NewClient(ctx, config.ProjectId); err != nil {
 			return nil, err
 		}
+	} else {
+		lf.providedClient = client
 	}
 	return lf, nil
 }
@@ -55,7 +58,15 @@ func (lf *LoaderFactory) SinkId() string {
 }
 
 func (lf *LoaderFactory) NewLoader(ctx context.Context, c entity.Config) (entity.Loader, error) {
-	return newLoader(ctx, c, NewBigQueryClient(c, lf.client), &bigQueryMetadataMutex)
+	var client BigQueryClient
+
+	if isNil(lf.providedClient) {
+		client = NewBigQueryClient(c, lf.client)
+	} else {
+		client = lf.providedClient
+	}
+
+	return newLoader(ctx, c, client, &bigQueryMetadataMutex)
 }
 
 func (lf *LoaderFactory) NewSinkExtractor(ctx context.Context, c entity.Config) (entity.Extractor, error) {
