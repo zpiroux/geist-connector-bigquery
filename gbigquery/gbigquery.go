@@ -7,6 +7,8 @@ import (
 
 	"cloud.google.com/go/bigquery"
 	"github.com/zpiroux/geist/entity"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/option"
 )
 
 const sinkTypeId = "bigquery"
@@ -15,6 +17,14 @@ type Config struct {
 
 	// ProjectId (required) specifies GCP project ID for this deployment.
 	ProjectId string
+
+	// Client (optional) enables fully customized clients to be used, e.g., for unit
+	// testing.
+	Client BigQueryClient
+
+	// Creds (optional) can be used to override the default authentication method (using
+	// GOOGLE_APPLICATION_CREDENTIALS) by providing externally created credentials.
+	Creds *google.Credentials
 }
 
 // bigQueryMetadataMutex reduces the amount of unneeded requests for certain stream setup operations.
@@ -25,32 +35,33 @@ type Config struct {
 var bigQueryMetadataMutex sync.Mutex
 
 type LoaderFactory struct {
-	config         Config
 	client         *bigquery.Client
 	providedClient BigQueryClient
 }
 
 // NewLoaderFactory creates a new BigQuery loader connector.
-// For standard usage, set bqClient to nil, making a default BigQuery client to be
-// created internally.
-func NewLoaderFactory(ctx context.Context, config Config, client BigQueryClient) (*LoaderFactory, error) {
-	var err error
-	lf := &LoaderFactory{
-		config: config,
-	}
+func NewLoaderFactory(ctx context.Context, config Config) (*LoaderFactory, error) {
+	var (
+		err error
+		lf  LoaderFactory
+	)
 
 	if config.ProjectId == "" {
 		return nil, errors.New("no project id set")
 	}
 
-	if isNil(client) {
-		if lf.client, err = bigquery.NewClient(ctx, config.ProjectId); err != nil {
-			return nil, err
-		}
-	} else {
-		lf.providedClient = client
+	if !isNil(config.Client) {
+		lf.providedClient = config.Client
+		return &lf, nil
 	}
-	return lf, nil
+
+	if config.Creds == nil {
+		lf.client, err = bigquery.NewClient(ctx, config.ProjectId)
+	} else {
+		lf.client, err = bigquery.NewClient(ctx, config.ProjectId, option.WithCredentials(config.Creds))
+	}
+
+	return &lf, err
 }
 
 func (lf *LoaderFactory) SinkId() string {
