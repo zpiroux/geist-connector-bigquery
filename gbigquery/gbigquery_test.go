@@ -11,9 +11,9 @@ import (
 func TestGeistIntegration(t *testing.T) {
 	ctx := context.Background()
 	geistConfig := geist.NewConfig()
-	bqConfig := Config{ProjectId: "someProjectID"}
+	bqConfig := Config{ProjectId: "someProjectID", Client: &MockBigQueryClient{}}
 
-	lf, err := NewLoaderFactory(ctx, bqConfig, &MockBigQueryClient{})
+	lf, err := NewLoaderFactory(ctx, bqConfig)
 	assert.NoError(t, err)
 	err = geistConfig.RegisterLoaderType(lf)
 	assert.NoError(t, err)
